@@ -23,7 +23,22 @@ def train_adalora(dataset, backbone, init_lambda, seed, shots=16, epochs=50):
     
     # Load data
     train_set, val_set = get_dataset(dataset, './data', backbone)
-    num_classes = len(train_set.dataset.classes) if hasattr(train_set.dataset, 'classes') else len(set(train_set.dataset.targets))
+    
+    # Get num_classes - handle both Subset and direct datasets
+    if hasattr(train_set, 'dataset'):
+        # It's a Subset
+        base_dataset = train_set.dataset
+    else:
+        # It's the dataset directly
+        base_dataset = train_set
+    
+    # Get number of classes
+    if hasattr(base_dataset, 'classes'):
+        num_classes = len(base_dataset.classes)
+    elif hasattr(base_dataset, '_labels'):
+        num_classes = len(set(base_dataset._labels))
+    else:
+        num_classes = len(set(train_set.targets))
     train_loader = get_dataloader(train_set, 32, k_shots=shots, seed=seed, is_train=True)
     val_loader = get_dataloader(val_set, 32, is_train=False)
     
